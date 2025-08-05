@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Cadastro de Produtos</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; }
+        h1 { color: #2a9d8f; }
+        form { margin-bottom: 20px; }
+        input, button { margin: 5px 0; padding: 8px; width: 300px; }
+        #produtos { margin-top: 20px; }
+        .item { border-bottom: 1px solid #ccc; padding: 10px 0; }
+    </style>
+</head>
+<body>
+
+    <h1>Cadastro de Produtos</h1>
+
+    <form id="formProduto">
+        <input type="text" id="nome" placeholder="Nome do produto" required>
+        <input type="number" id="preco" placeholder="Preço" required step="0.01" min="0">
+        <button type="submit">Cadastrar</button>
+    </form>
+
+    <div id="produtos"></div>
+
+    <script>
+        const API_URL = "https://orange-carnival-v6vrv559754ghxwpx-8080.app.github.dev/api/produtos";
+
+
+        // Função para listar produtos
+        function listarProdutos() {
+            fetch(API_URL)
+                .then(res => res.json())
+                .then(data => {
+                    const container = document.getElementById("produtos");
+                    container.innerHTML = "<h2>Produtos cadastrados:</h2>";
+                    data.forEach(p => {
+                        container.innerHTML += `
+                            <div class="item">
+                                <strong>${p.nome}</strong> - R$ ${p.preco.toFixed(2)}
+                            </div>
+                        `;
+                    });
+                })
+                .catch(err => {
+                    console.error('Erro ao listar produtos:', err);
+                    document.getElementById("produtos").innerHTML = "<p>Erro ao carregar produtos.</p>";
+                });
+        }
+
+        // Enviar novo produto
+        document.getElementById("formProduto").addEventListener("submit", e => {
+            e.preventDefault();
+
+            const nome = document.getElementById("nome").value;
+            const preco = parseFloat(document.getElementById("preco").value);
+
+            fetch(API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ nome, preco })
+            })
+            .then(() => {
+                document.getElementById("formProduto").reset();
+                listarProdutos();
+            })
+            .catch(err => {
+                console.error('Erro ao cadastrar produto:', err);
+                alert('Erro ao cadastrar produto');
+            });
+        });
+
+        // Carregar lista ao abrir
+        listarProdutos();
+    </script>
+
+</body>
+</html>
