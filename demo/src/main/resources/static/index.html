@@ -17,18 +17,22 @@
     <h1>Cadastro de Produtos</h1>
 
     <form id="formProduto">
+        <input type="hidden" id="id">
         <input type="text" id="nome" placeholder="Nome do produto" required>
         <input type="number" id="preco" placeholder="Preço" required step="0.01" min="0">
         <button type="submit">Cadastrar</button>
+        <button type="button" onclick="atualizarProduto()">Atualizar</button>
+        <button type="button" onclick="removerProduto()">Remover</button>
     </form>
+
+    <input type="text" id="buscarNome" placeholder="Buscar por nome">
+    <button onclick="buscarProduto()">Buscar</button>
 
     <div id="produtos"></div>
 
     <script>
         const API_URL = "https://orange-carnival-v6vrv559754ghxwpx-8080.app.github.dev/api/produtos";
 
-
-        // Função para listar produtos
         function listarProdutos() {
             fetch(API_URL)
                 .then(res => res.json())
@@ -38,7 +42,8 @@
                     data.forEach(p => {
                         container.innerHTML += `
                             <div class="item">
-                                <strong>${p.nome}</strong> - R$ ${p.preco.toFixed(2)}
+                                <strong>${p.nome}</strong> - R$ ${p.preco.toFixed(2)} 
+                                <button onclick='selecionarProduto(${JSON.stringify(p)})'>Selecionar</button>
                             </div>
                         `;
                     });
@@ -49,10 +54,14 @@
                 });
         }
 
-        // Enviar novo produto
+        function selecionarProduto(produto) {
+            document.getElementById("id").value = produto.id;
+            document.getElementById("nome").value = produto.nome;
+            document.getElementById("preco").value = produto.preco;
+        }
+
         document.getElementById("formProduto").addEventListener("submit", e => {
             e.preventDefault();
-
             const nome = document.getElementById("nome").value;
             const preco = parseFloat(document.getElementById("preco").value);
 
@@ -71,7 +80,64 @@
             });
         });
 
-        // Carregar lista ao abrir
+        function atualizarProduto() {
+            const id = document.getElementById("id").value;
+            const nome = document.getElementById("nome").value;
+            const preco = parseFloat(document.getElementById("preco").value);
+
+            fetch(`${API_URL}/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ nome, preco })
+            })
+            .then(() => {
+                alert("Produto atualizado!");
+                document.getElementById("formProduto").reset();
+                listarProdutos();
+            })
+            .catch(err => {
+                console.error('Erro ao atualizar produto:', err);
+                alert('Erro ao atualizar produto');
+            });
+        }
+
+        function removerProduto() {
+            const id = document.getElementById("id").value;
+
+            fetch(`${API_URL}/${id}`, {
+                method: "DELETE"
+            })
+            .then(() => {
+                alert("Produto removido!");
+                document.getElementById("formProduto").reset();
+                listarProdutos();
+            })
+            .catch(err => {
+                console.error('Erro ao remover produto:', err);
+                alert('Erro ao remover produto');
+            });
+        }
+
+        function buscarProduto() {
+            const nome = document.getElementById("buscarNome").value;
+
+            fetch(`${API_URL}?nome=${encodeURIComponent(nome)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.length > 0) {
+                        selecionarProduto(data[0]);
+                        alert("Produto encontrado!");
+                    } else {
+                        alert("Produto não encontrado.");
+                    }
+                })
+                .catch(err => {
+                    console.error('Erro ao buscar produto:', err);
+                    alert('Erro ao buscar produto');
+                });
+        }
+
+        // Lista os produtos ao carregar a página
         listarProdutos();
     </script>
 
